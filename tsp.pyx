@@ -331,7 +331,7 @@ cdef class SimulatedAnnealing:
         
         print(f"Starting simulated annealing with initial cost: {self.current_cost:.4f}")
         
-        while iteration < self.max_iterations and iterations_without_improvement < self.max_iterations_without_improvement:
+        while iteration < self.max_iterations:
             # Choose move type based on temperature (more complex moves at higher temperatures)
             r = rand_uniform()
             if self.temperature > 10 and r < 0.3:
@@ -450,11 +450,15 @@ cdef class SimulatedAnnealing:
             if iterations_without_improvement > 2000 and self.temperature < 1.0:
                 self.temperature = 10.0  # Moderate reheat
                 #print(f"Reheating at iteration {iteration}")
+
+            if iterations_without_improvement >= self.max_iterations_without_improvement:
+                print(f"No improvement in {iterations_without_improvement} iterations, resetting to best path")
+                self.current_cost = self.best_cost
+                memcpy(self.current_path, self.best_path, self.n_nodes * sizeof(int))
+                self.temperature = 1
+                iterations_without_improvement = 0
             
             iteration += 1
-        
-        if iterations_without_improvement >= self.max_iterations_without_improvement:
-            print(f"Stopped early: no improvement in {iterations_without_improvement} iterations")
         
         print(f"Optimization complete after {iteration} iterations. Final best cost: {self.best_cost:.4f}")
     
